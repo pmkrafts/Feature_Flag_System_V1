@@ -47,6 +47,7 @@ npm install -D jest ts-jest supertest
 npm install -D @types/node @types/express @types/jest @types/supertest @types/jsonwebtoken @types/cors @types/compression
 npm install -D eslint @eslint/js @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-config-prettier
 npm install -D prettier
+npm install -D @commitlint/cli @commitlint/config-conventional
 ```
 
 ## 4) Add scripts to package.json
@@ -63,12 +64,26 @@ Replace scripts in package.json with:
     "start": "node dist/server.js",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
+    "lint:commit": "commitlint --from=HEAD~1 --to=HEAD --verbose",
+    "lint:commit:msg": "commitlint --edit",
     "format": "prettier --write .",
     "test": "jest --runInBand",
     "test:unit": "jest tests/unit --runInBand",
     "test:integration": "jest tests/integration --runInBand"
   }
 }
+```
+
+## 4.1) Configure Commitlint
+
+Why: Enforces Conventional Commits so history stays readable and automations can parse commit intent.
+
+Create commitlint.config.cjs:
+
+```js
+module.exports = {
+  extends: ["@commitlint/config-conventional"]
+};
 ```
 
 ## 5) Configure TypeScript
@@ -737,6 +752,15 @@ docker-compose up --build
 npm run lint
 npm run test
 npm run build
+npm run lint:commit
+```
+
+Commit message examples that pass:
+
+```text
+feat: add sample create endpoint
+fix: handle missing authorization header
+docs: update setup guide for commitlint
 ```
 
 If everything is green, initialize git (if not already done):

@@ -32,6 +32,7 @@ http://localhost:3000/api/v1
 - Zod validation
 - JWT auth middleware placeholder
 - Jest + Supertest
+- Commitlint (Conventional Commits)
 - Docker + docker-compose
 
 ## Project Structure
@@ -72,6 +73,14 @@ npm run dev
 
 npm run build
 npm start
+
+4. Validate commit messages
+
+npm run lint:commit
+
+To validate a message before committing:
+
+echo "feat: add sample endpoint" | npx commitlint
 
 ## Docker
 

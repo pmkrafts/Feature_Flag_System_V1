@@ -162,11 +162,18 @@ Throw unknown  -> errorHandler -> 500 -> { success: false, error: Internal Serve
 
 This gives confidence at both logic and API contract levels.
 
+## 8.1) Commit Quality Strategy
+
+- Commit messages follow Conventional Commits and are validated with `commitlint`.
+- Config is defined in `commitlint.config.cjs` and extends `@commitlint/config-conventional`.
+- Use `npm run lint:commit` to validate recent commits in the local branch.
+
 ## 9) Deployment and Build Flow
 
 ### Local development
 
 - `npm run dev`: runs with `ts-node` + `nodemon`
+- `npm run lint:commit`: checks commit messages against Conventional Commits rules
 
 ### Production build
 
