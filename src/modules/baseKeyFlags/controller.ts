@@ -6,37 +6,37 @@ import { AppError } from "@/utils/appError";
 export class BaseKeyFlagsController {
   constructor(private readonly service: BaseKeyFlagsService) {}
 
-  listFeatures = (_req: Request, res: Response): Response => {
-    return sendSuccess(res, this.service.listFeatures());
+  listFeatures = async (_req: Request, res: Response): Promise<Response> => {
+    return sendSuccess(res, await this.service.listFeatures());
   };
 
-  getFeatureByKey = (req: Request, res: Response): Response => {
-    return sendSuccess(res, this.service.getFeatureByKey(req.params.key));
+  getFeatureByKey = async (req: Request, res: Response): Promise<Response> => {
+    return sendSuccess(res, await this.service.getFeatureByKey(req.params.key));
   };
 
-  createFeature = (req: Request, res: Response): Response => {
+  createFeature = async (req: Request, res: Response): Promise<Response> => {
     const { key, displayName, releasedTo } = req.body;
-    const created = this.service.createFeature(key, displayName, releasedTo);
+    const created = await this.service.createFeature(key, displayName, releasedTo);
     return sendSuccess(res, created, 201);
   };
 
-  updateReleaseTarget = (req: Request, res: Response): Response => {
+  updateReleaseTarget = async (req: Request, res: Response): Promise<Response> => {
     const { releasedTo } = req.body;
-    const updated = this.service.updateReleaseTarget(req.params.key, releasedTo);
+    const updated = await this.service.updateReleaseTarget(req.params.key, releasedTo);
     return sendSuccess(res, updated);
   };
 
-  checkAccess = (req: Request, res: Response): Response => {
+  checkAccess = async (req: Request, res: Response): Promise<Response> => {
     const { userTier } = req.body;
-    const result = this.service.evaluateAccess(req.params.key, userTier);
+    const result = await this.service.evaluateAccess(req.params.key, userTier);
     return sendSuccess(res, result);
   };
 
-  getUsageByTier = (_req: Request, res: Response): Response => {
-    return sendSuccess(res, this.service.getUsageByTier());
+  getUsageByTier = async (_req: Request, res: Response): Promise<Response> => {
+    return sendSuccess(res, await this.service.getUsageByTier());
   };
 
-  getFeaturePopularity = (req: Request, res: Response): Response => {
+  getFeaturePopularity = async (req: Request, res: Response): Promise<Response> => {
     const rawHours = req.query.hours;
     const hours = rawHours === undefined ? 24 : Number(rawHours);
 
@@ -44,10 +44,10 @@ export class BaseKeyFlagsController {
       throw new AppError("hours must be a positive number", 400);
     }
 
-    return sendSuccess(res, this.service.getFeaturePopularity(hours));
+    return sendSuccess(res, await this.service.getFeaturePopularity(hours));
   };
 
-  getLastSeen = (_req: Request, res: Response): Response => {
-    return sendSuccess(res, this.service.getLastSeen());
+  getLastSeen = async (_req: Request, res: Response): Promise<Response> => {
+    return sendSuccess(res, await this.service.getLastSeen());
   };
 }

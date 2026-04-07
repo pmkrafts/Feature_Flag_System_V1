@@ -1,0 +1,590 @@
+openapi: 3.0.3
+info:
+  title: Feature Flag System API
+  version: 1.0.0
+  description: |
+    Swagger documentation for the Express TypeScript backend.
+
+    Base prefix: /api/v1
+
+servers:
+  - url: http://localhost:3000
+    description: Local / Docker exposed host
+
+tags:
+  - name: System
+    description: Health and API metadata
+  - name: Sample
+    description: Sample module endpoints
+  - name: BaseKeyFlags
+    description: Feature flag CRUD, access checks, and analytics
+
+paths:
+  /api/v1:
+    get:
+      tags: [System]
+      summary: API root
+      description: Returns API status and exposed top-level endpoint names.
+      responses:
+        '200':
+          description: API metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiRootResponse'
+
+  /api/v1/health:
+    get:
+      tags: [System]
+      summary: Health check
+      description: Returns service health status.
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/sample:
+    get:
+      tags: [Sample]
+      summary: List sample items
+      responses:
+        '200':
+          description: Sample item list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SampleListResponse'
+
+    post:
+      tags: [Sample]
+      summary: Create sample item
+      description: Requires Bearer JWT token.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSampleRequest'
+      responses:
+        '201':
+          description: Sample item created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SampleSingleResponse'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/base-key-flags:
+    get:
+      tags: [BaseKeyFlags]
+      summary: List all features
+      description: Returns all feature flags. Uses Redis cache with DB fallback.
+      responses:
+        '200':
+          description: Feature list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureListResponse'
+
+    post:
+      tags: [BaseKeyFlags]
+      summary: Create a feature flag
+      description: Requires Bearer JWT token.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFeatureRequest'
+      responses:
+        '201':
+          description: Feature created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureSingleResponse'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Feature key already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/base-key-flags/{key}:
+    get:
+      tags: [BaseKeyFlags]
+      summary: Get feature by key
+      parameters:
+        - $ref: '#/components/parameters/FeatureKey'
+      responses:
+        '200':
+          description: Feature found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureSingleResponse'
+        '404':
+          description: Feature not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/base-key-flags/{key}/release:
+    patch:
+      tags: [BaseKeyFlags]
+      summary: Update feature release target
+      description: Requires Bearer JWT token.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/FeatureKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReleaseRequest'
+      responses:
+        '200':
+          description: Feature updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureSingleResponse'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Feature not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/base-key-flags/{key}/check:
+    post:
+      tags: [BaseKeyFlags]
+      summary: Evaluate access to a feature
+      description: |
+        Evaluates whether a given user tier can access the feature.
+        If access is allowed, a usage log entry is created.
+      parameters:
+        - $ref: '#/components/parameters/FeatureKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckAccessRequest'
+      responses:
+        '200':
+          description: Access evaluation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessEvaluationResponse'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Feature not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/base-key-flags/analytics/by-tier:
+    get:
+      tags: [BaseKeyFlags]
+      summary: Usage totals by feature and user tier
+      responses:
+        '200':
+          description: Usage aggregation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageByTierResponse'
+
+  /api/v1/base-key-flags/analytics/popularity:
+    get:
+      tags: [BaseKeyFlags]
+      summary: Feature popularity in time window
+      description: Returns usage count by feature in the last N hours.
+      parameters:
+        - in: query
+          name: hours
+          required: false
+          schema:
+            type: number
+            minimum: 0.000001
+            default: 24
+          description: Positive number of hours to look back.
+      responses:
+        '200':
+          description: Popularity aggregation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeaturePopularityResponse'
+        '400':
+          description: Invalid hours value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/base-key-flags/analytics/last-seen:
+    get:
+      tags: [BaseKeyFlags]
+      summary: Last seen usage timestamp by feature
+      responses:
+        '200':
+          description: Last-seen data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureLastSeenResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    FeatureKey:
+      in: path
+      name: key
+      required: true
+      schema:
+        type: string
+      description: Feature key identifier (for example `ai_chat`).
+
+  schemas:
+    ErrorBody:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          $ref: '#/components/schemas/ErrorBody'
+      required: [success, error]
+
+    ApiRootData:
+      type: object
+      properties:
+        message:
+          type: string
+          example: API v1 is running
+        endpoints:
+          type: array
+          items:
+            type: string
+          example: [/health, /sample, /base-key-flags]
+      required: [message, endpoints]
+
+    ApiRootResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/ApiRootData'
+      required: [success, data]
+
+    HealthData:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+      required: [status]
+
+    HealthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/HealthData'
+      required: [success, data]
+
+    SampleEntity:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Alpha
+      required: [id, name]
+
+    CreateSampleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          example: Gamma
+      required: [name]
+
+    SampleListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SampleEntity'
+      required: [success, data]
+
+    SampleSingleResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/SampleEntity'
+      required: [success, data]
+
+    Feature:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        key:
+          type: string
+          example: ai_chat
+        displayName:
+          type: string
+          example: AI Assistant
+        releasedTo:
+          type: string
+          enum: [none, premium, all]
+          example: premium
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, key, displayName, releasedTo, updatedAt]
+
+    CreateFeatureRequest:
+      type: object
+      properties:
+        key:
+          type: string
+          minLength: 2
+          maxLength: 64
+          example: voice_clone
+        displayName:
+          type: string
+          minLength: 2
+          maxLength: 120
+          example: Voice Clone
+        releasedTo:
+          type: string
+          enum: [none, premium, all]
+          default: none
+      required: [key, displayName]
+
+    UpdateReleaseRequest:
+      type: object
+      properties:
+        releasedTo:
+          type: string
+          enum: [none, premium, all]
+          example: all
+      required: [releasedTo]
+
+    CheckAccessRequest:
+      type: object
+      properties:
+        userTier:
+          type: string
+          enum: [free, premium]
+          example: free
+      required: [userTier]
+
+    AccessEvaluation:
+      type: object
+      properties:
+        featureKey:
+          type: string
+          example: ai_chat
+        releasedTo:
+          type: string
+          enum: [none, premium, all]
+          example: premium
+        userTier:
+          type: string
+          enum: [free, premium]
+          example: free
+        allowed:
+          type: boolean
+          example: false
+      required: [featureKey, releasedTo, userTier, allowed]
+
+    UsageByTierItem:
+      type: object
+      properties:
+        featureKey:
+          type: string
+          example: ai_chat
+        userTier:
+          type: string
+          enum: [free, premium]
+          example: premium
+        totalUses:
+          type: integer
+          example: 12
+      required: [featureKey, userTier, totalUses]
+
+    FeaturePopularityItem:
+      type: object
+      properties:
+        featureKey:
+          type: string
+          example: ai_chat
+        usageCount:
+          type: integer
+          example: 34
+      required: [featureKey, usageCount]
+
+    FeatureLastSeenItem:
+      type: object
+      properties:
+        featureKey:
+          type: string
+          example: ai_chat
+        lastSeen:
+          type: string
+          format: date-time
+          nullable: true
+      required: [featureKey, lastSeen]
+
+    FeatureListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Feature'
+      required: [success, data]
+
+    FeatureSingleResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Feature'
+      required: [success, data]
+
+    AccessEvaluationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/AccessEvaluation'
+      required: [success, data]
+
+    UsageByTierResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UsageByTierItem'
+      required: [success, data]
+
+    FeaturePopularityResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeaturePopularityItem'
+      required: [success, data]
+
+    FeatureLastSeenResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeatureLastSeenItem'
+      required: [success, data]

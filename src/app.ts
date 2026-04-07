@@ -2,6 +2,9 @@ import compression from "compression";
 import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
+import path from "path";
+import swaggerUi from "swagger-ui-express";
+import YAML from "yamljs";
 import { env } from "@/config/env";
 import { errorHandler } from "@/middlewares/errorHandler";
 import { notFound } from "@/middlewares/notFound";
@@ -20,6 +23,10 @@ app.use(
     max: env.RATE_LIMIT_MAX
   })
 );
+
+const swaggerPath = path.resolve(process.cwd(), "swagger.yaml");
+const swaggerDocument = YAML.load(swaggerPath);
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use("/api/v1", apiRouter);
 

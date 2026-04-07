@@ -7,6 +7,20 @@ description: Custom agents for the Express TypeScript backend Feature Flag Syste
 
 This document describes custom agents available for working with this Express.js + TypeScript backend project. Each agent is optimized for specific development workflows.
 
+## Mandatory Context Bootstrap (Read First)
+
+Before any implementation, debugging, refactor, or test work, the agent must read these files to build project context:
+
+1. `PROJECT_ARCHITECTURE.md`
+2. `DOCKER_APP_CONNECTION.md`
+3. `RUN_MODES.md`
+4. `src/modules/baseKeyFlags/API_FLOW.md`
+5. `src/modules/baseKeyFlags/CREATION_STEPS.md`
+6. `swagger.yaml`
+
+If any of these files are updated during a task, re-read the changed file before continuing.
+Do not skip this step.
+
 ## Available Agents
 
 ### 1. **Module Architect**

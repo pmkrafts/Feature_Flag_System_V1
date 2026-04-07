@@ -8,6 +8,7 @@ const config: Config = {
     "^@/(.*)$": "<rootDir>/src/$1"
   },
   clearMocks: true,
+  forceExit: true,
   collectCoverageFrom: ["src/**/*.ts", "!src/server.ts"]
 };
 

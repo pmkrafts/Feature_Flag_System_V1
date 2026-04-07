@@ -8,7 +8,9 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
   JWT_SECRET: z.string().min(8),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(15 * 60 * 1000),
-  RATE_LIMIT_MAX: z.coerce.number().default(100)
+  RATE_LIMIT_MAX: z.coerce.number().default(100),
+  DATABASE_URL: z.string().url(),
+  REDIS_URL: z.string().url()
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -32,12 +32,12 @@ type FeatureLastSeen = {
 export class BaseKeyFlagsService {
   constructor(private readonly repository: BaseKeyFlagsRepository) {}
 
-  listFeatures(): BaseKeyFeature[] {
+  async listFeatures(): Promise<BaseKeyFeature[]> {
     return this.repository.getAllFeatures();
   }
 
-  getFeatureByKey(key: string): BaseKeyFeature {
-    const feature = this.repository.getFeatureByKey(key);
+  async getFeatureByKey(key: string): Promise<BaseKeyFeature> {
+    const feature = await this.repository.getFeatureByKey(key);
 
     if (!feature) {
       throw new AppError("Feature not found", 404);
@@ -46,8 +46,8 @@ export class BaseKeyFlagsService {
     return feature;
   }
 
-  createFeature(key: string, displayName: string, releasedTo: ReleaseTarget): BaseKeyFeature {
-    const existing = this.repository.getFeatureByKey(key);
+  async createFeature(key: string, displayName: string, releasedTo: ReleaseTarget): Promise<BaseKeyFeature> {
+    const existing = await this.repository.getFeatureByKey(key);
 
     if (existing) {
       throw new AppError("Feature key already exists", 409);
@@ -56,8 +56,8 @@ export class BaseKeyFlagsService {
     return this.repository.createFeature(key, displayName, releasedTo);
   }
 
-  updateReleaseTarget(key: string, releasedTo: ReleaseTarget): BaseKeyFeature {
-    const updated = this.repository.updateReleaseTarget(key, releasedTo);
+  async updateReleaseTarget(key: string, releasedTo: ReleaseTarget): Promise<BaseKeyFeature> {
+    const updated = await this.repository.updateReleaseTarget(key, releasedTo);
 
     if (!updated) {
       throw new AppError("Feature not found", 404);
@@ -66,8 +66,8 @@ export class BaseKeyFlagsService {
     return updated;
   }
 
-  evaluateAccess(featureKey: string, userTier: UserTier): AccessEvaluation {
-    const feature = this.repository.getFeatureByKey(featureKey);
+  async evaluateAccess(featureKey: string, userTier: UserTier): Promise<AccessEvaluation> {
+    const feature = await this.repository.getFeatureByKey(featureKey);
 
     if (!feature) {
       throw new AppError("Feature not found", 404);
@@ -78,7 +78,7 @@ export class BaseKeyFlagsService {
       (feature.releasedTo === "premium" && userTier === "premium");
 
     if (allowed) {
-      this.repository.createUsageLog(feature.key, userTier, true);
+      await this.repository.createUsageLog(feature.key, userTier, true);
     }
 
     return {
@@ -89,10 +89,12 @@ export class BaseKeyFlagsService {
     };
   }
 
-  getUsageByTier(): UsageByTier[] {
+  async getUsageByTier(): Promise<UsageByTier[]> {
     const totals = new Map<string, UsageByTier>();
 
-    this.repository.getAllUsageLogs().forEach((log) => {
+    const logs = await this.repository.getAllUsageLogs();
+
+    logs.forEach((log) => {
       const mapKey = `${log.featureKey}::${log.userTier}`;
       const current = totals.get(mapKey);
 
@@ -111,11 +113,13 @@ export class BaseKeyFlagsService {
     return [...totals.values()];
   }
 
-  getFeaturePopularity(hours = 24): FeaturePopularity[] {
+  async getFeaturePopularity(hours = 24): Promise<FeaturePopularity[]> {
     const minDate = Date.now() - hours * 60 * 60 * 1000;
     const totals = new Map<string, number>();
 
-    this.repository.getAllUsageLogs().forEach((log) => {
+    const logs = await this.repository.getAllUsageLogs();
+
+    logs.forEach((log) => {
       const createdAtMs = new Date(log.createdAt).getTime();
 
       if (createdAtMs <= minDate) {
@@ -132,10 +136,13 @@ export class BaseKeyFlagsService {
     }));
   }
 
-  getLastSeen(): FeatureLastSeen[] {
-    const logs = this.repository.getAllUsageLogs();
+  async getLastSeen(): Promise<FeatureLastSeen[]> {
+    const [features, logs] = await Promise.all([
+      this.repository.getAllFeatures(),
+      this.repository.getAllUsageLogs()
+    ]);
 
-    return this.repository.getAllFeatures().map((feature) => {
+    return features.map((feature) => {
       const featureLogs = logs.filter((log) => log.featureKey === feature.key);
       const lastSeen = featureLogs
         .map((log) => log.createdAt)

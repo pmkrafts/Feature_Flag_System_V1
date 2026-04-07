@@ -6,6 +6,8 @@ import { BaseKeyFlagsController } from "@/modules/baseKeyFlags/controller";
 import { authMiddleware } from "@/middlewares/auth";
 import { validateBody } from "@/middlewares/validate";
 import { asyncHandler } from "@/utils/asyncHandler";
+import { db } from "@/config/db";
+import { redis } from "@/config/redis";
 
 const createFeatureSchema = z.object({
   key: z.string().min(2).max(64),
@@ -21,7 +23,7 @@ const checkAccessSchema = z.object({
   userTier: z.enum(["free", "premium"])
 });
 
-const repository = new BaseKeyFlagsRepository();
+const repository = new BaseKeyFlagsRepository(db, redis);
 const service = new BaseKeyFlagsService(repository);
 const controller = new BaseKeyFlagsController(service);
 
