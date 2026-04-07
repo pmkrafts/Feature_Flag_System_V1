@@ -24,6 +24,7 @@ http://localhost:3000/api/v1
 
 - Architecture flow and structure: [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md)
 - Full step-by-step project creation guide: [PROJECT_CREATION_GUIDE.md](PROJECT_CREATION_GUIDE.md)
+- Swagger UI docs: http://localhost:3000/docs/
 
 ## Stack
 
